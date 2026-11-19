@@ -41,12 +41,14 @@ class AgentFrameworkExecutor(AgentExecutor):
             await updater.start_work()
 
             # Convert the A2A message into arguments for the Agent Framework agent
+            run = a2a_to_run(context.message, stream=True)
 
             agent = await self.state.get_target()
             session_id = f"a2a:{context.tenant}:{context.context_id}"
             session = await self.state.get_or_create_session(session_id)
 
             # Run the agent and stream each update back to the caller as an A2A artifact
+            stream = agent.run(run["messages"], session=session, options=run["options"], stream=True)
 
             default_artifact_id = uuid.uuid4().hex
             streamed_artifact_ids: set[str] = set()
@@ -69,6 +71,7 @@ class AgentFrameworkExecutor(AgentExecutor):
             await self.state.set_session(session_id, session)
 
             # Mark the task as complete
+            await updater.complete()
 
         except CancelledError:
             await updater.update_status(state=TaskState.TASK_STATE_CANCELED)

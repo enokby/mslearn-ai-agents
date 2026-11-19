@@ -48,12 +48,17 @@ async def main() -> None:
         async with httpx.AsyncClient(timeout=60.0) as http_client:
             for url in remote_agent_urls():
                 # Discover the remote agent by fetching its agent card
+                card = await A2ACardResolver(httpx_client=http_client, base_url=url).get_agent_card()
 
                 print(f"Discovered remote agent: {card.name} - {card.description}")
 
                 # Connect to the remote agent over A2A
+                remote = await stack.enter_async_context(
+                    A2AAgent(name=card.name, description=card.description, agent_card=card, url=url)
+                )
 
                 # Give the routing agent the remote agent as a tool it can call
+                tools.append(remote.as_tool())
 
         routing_agent = Agent(
             client=client,

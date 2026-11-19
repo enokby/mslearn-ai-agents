@@ -44,25 +44,6 @@ def main():
         },
         strict=True,
         )
-        
-
-        # Define the event function tool
-        event_tool = FunctionTool(
-        name="next_visible_event",
-        description="Get the next visible event in a given location.",
-        parameters={
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "continent to find the next visible event in (e.g. 'north_america', 'south_america', 'australia')",
-                },
-            },
-            "required": ["location"],
-            "additionalProperties": False,
-        },
-        strict=True,
-        )
 
         # Define the observation cost function tool
         cost_tool = FunctionTool(
@@ -176,10 +157,7 @@ def main():
             if response.status == "failed":
                 print(f"Response failed: {response.error}")
 
-
-            # Check the run status for failures
-            if response.status == "failed":
-                print(f"Response failed: {response.error}")# Process function calls
+            # Process function calls
             for item in response.output:
                 if item.type == "function_call":
                     # Retrieve the matching function tool
@@ -200,32 +178,16 @@ def main():
                             output=result,
                         )
                     )
-                        
 
-            # Check the run status for failures
-            if response.status == "failed":
-                print(f"Response failed: {response.error}")# Process function calls
-            for item in response.output:
-                if item.type == "function_call":
-                    # Retrieve the matching function tool
-                    function_name = item.name
-                    result = None
-                    if item.name == "next_visible_event":
-                        result = next_visible_event(**json.loads(item.arguments))
-                    elif item.name == "calculate_observation_cost":
-                        result = calculate_observation_cost(**json.loads(item.arguments))
-                    elif item.name == "generate_observation_report":
-                        result = generate_observation_report(**json.loads(item.arguments))
-
-                    # Append the output text
-                    input_list.append(
-                        FunctionCallOutput(
-                            type="function_call_output",
-                            call_id=item.call_id,
-                            output=result,
-                        )
-                    )
-            
+            # Send function call outputs back to the model and retrieve a response
+            if input_list:
+                response = openai_client.responses.create(
+                    conversation=conversation.id,
+                    input=input_list,
+                    extra_body={"agent_reference": {"name": agent.name, "type": "agent_reference"}},
+                )
+            # Display the agent's response
+            print(f"AGENT: {response.output_text}")
 
         # Delete the agent when done
         project_client.agents.delete_version(agent_name=agent.name, agent_version=agent.version)

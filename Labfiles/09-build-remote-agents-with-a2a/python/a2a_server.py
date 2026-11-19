@@ -68,8 +68,10 @@ def main() -> None:
     app = Starlette(
         routes=[
             # Serve the agent card so other agents can discover this one
+            *create_agent_card_routes(agent_card),
 
             # Accept A2A messages (JSON-RPC) and pass them to the request handler
+            *create_jsonrpc_routes(request_handler, "/"),
             Route("/health", health, methods=["GET"]),
         ]
     )

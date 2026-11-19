@@ -22,6 +22,7 @@ Each section should be 5 to 10 words long, suitable for structuring a short blog
 def create_title_agent(client: FoundryChatClient) -> Agent:
     """Create the title agent on the Foundry-backed chat client."""
     # Create the title agent
+    return Agent(client=client, name="TitleAgent", instructions=TITLE_INSTRUCTIONS)
 
 
 def create_outline_agent(client: FoundryChatClient) -> Agent:
@@ -35,8 +36,25 @@ _CAPABILITIES = AgentCapabilities(streaming=True, push_notifications=False)
 def get_title_agent_card(url: str) -> AgentCard:
     """Return the A2A agent card that makes the title agent discoverable."""
     # Define the agent skill
+    skill = AgentSkill(
+        id="generate_blog_title",
+        name="Generate Blog Title",
+        description="Generates a blog title based on a topic.",
+        tags=["title", "agent-framework"],
+        examples=["Give me a title for a post about remote agents."],
+    )
 
     # Create the agent card
+    return AgentCard(
+        name="TitleAgent",
+        description="Generates a catchy blog post title for a given topic.",
+        version="1.0.0",
+        default_input_modes=["text"],
+        default_output_modes=["text"],
+        capabilities=_CAPABILITIES,
+        supported_interfaces=[AgentInterface(url=url, protocol_binding="JSONRPC", protocol_version="1.0")],
+        skills=[skill],
+    )
 
 
 
